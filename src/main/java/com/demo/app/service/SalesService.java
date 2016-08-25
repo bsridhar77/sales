@@ -1,6 +1,6 @@
 package com.demo.app.service;
 
-import java.util.Date;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.demo.app.model.Sales;
+import com.demo.app.model.SalesData;
 import com.demo.app.model.SalesKey;
 import com.demo.app.repository.SalesTemplateImpl;
 import com.demo.app.request.SalesRequest;
@@ -42,8 +43,14 @@ public class SalesService {
     	SalesKey salesKey=new SalesKey();
     	salesKey.setHostName(salesRequest.getHostname());
     	salesKey.setTimestamp(salesRequest.getDate());
-    	LOGGER.info("Leaving.");
-    	Sales sales=salesTemplateImpl.createSales(salesKey, salesRequest.getTotalAmount());
+    	
+    	SalesData salesData1=new SalesData();
+    	salesData1.setType(salesRequest.getType());
+    	salesData1.setVolume(new String[]{"1","2","3","4","5"});
+    	
+    	
+    	
+    	Sales sales=salesTemplateImpl.createSales(salesKey,salesData1, salesRequest.getTotalAmount());
     	LOGGER.info("Sale Created:" + sales);
     	return sales;
     }
@@ -57,6 +64,6 @@ public class SalesService {
     	salesKey.setHostName(salesRequest.getHostname());
     	salesKey.setTimestamp(salesRequest.getDate());
     	LOGGER.info("Leaving.");
-    	salesTemplateImpl.updateSales(salesKey, salesRequest.getTotalAmount());
+    	salesTemplateImpl.updateSales(salesKey, salesRequest);
     }
 }

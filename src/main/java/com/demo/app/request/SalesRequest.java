@@ -10,6 +10,20 @@ public class SalesRequest {
 	Date date;
 	String hostname;
 	String totalAmount;
+	String type;
+	String volume;
+	public String getVolume() {
+		return volume;
+	}
+	public void setVolume(String volume) {
+		this.volume = volume;
+	}
+	public String getType() {
+		return type;
+	}
+	public void setType(String type) {
+		this.type = type;
+	}
 	public Date getDate() {
 		return date;
 	}
@@ -19,7 +33,8 @@ public class SalesRequest {
 	
 	@Override
 	public String toString() {
-		return "SalesRequest [date=" + date + ", hostname=" + hostname + ", totalAmount=" + totalAmount + "]";
+		return "SalesRequest [date=" + date + ", hostname=" + hostname + ", totalAmount=" + totalAmount + ", type="
+				+ type + ", volume=" + volume + "]";
 	}
 	public String getHostname() {
 		return hostname;
