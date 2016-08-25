@@ -3,6 +3,9 @@ package com.demo.app.repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,26 @@ public class SalesTemplateImpl {
 		update.set("totalAmount", salesRequest.getTotalAmount());
 		update.push("salesData.$.volume",salesRequest.getVolume());
 		
+		WriteResult result=mongoTemplate.updateFirst(query,update,Sales.class);
+		LOGGER.info("WriteResult:" + result);
+	}
+	
+	public void updateSalesWithNewType(SalesKey salesKey,SalesRequest salesRequest){
+		Query query = new Query(Criteria.where("_id").is(salesKey));
+		BsonDocument doc=new BsonDocument();
+		String[] volumeArr=new String[]{"1","2","3","4","5"};
+		BsonArray bsonArr=new BsonArray();
+		for(int i=0;i<volumeArr.length;i++){
+			bsonArr.add(i,new BsonString(volumeArr[0]));
+		}
+				
+
+    	
+		doc.append("type", new BsonString(salesRequest.getType()));
+		doc.append("volume", bsonArr);
+		Update update=new Update();
+		update.addToSet("salesData",doc);
+			
 		WriteResult result=mongoTemplate.updateFirst(query,update,Sales.class);
 		LOGGER.info("WriteResult:" + result);
 	}

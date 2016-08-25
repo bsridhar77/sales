@@ -55,6 +55,7 @@ public class SalesService {
     	return sales;
     }
 
+    
     @RequestMapping(value = "/sales", method = RequestMethod.PUT)
 	public void updateSales(@RequestBody SalesRequest salesRequest) {
     	LOGGER.info("Entering...");
@@ -65,5 +66,18 @@ public class SalesService {
     	salesKey.setTimestamp(salesRequest.getDate());
     	LOGGER.info("Leaving.");
     	salesTemplateImpl.updateSales(salesKey, salesRequest);
+    }
+    
+    
+    @RequestMapping(value = "/sales/type", method = RequestMethod.PUT)
+	public void updateSalesWithNewType(@RequestBody SalesRequest salesRequest) {
+    	LOGGER.info("Entering...");
+    	LOGGER.info("Received...salesRequest:::" + salesRequest);
+    	
+    	SalesKey salesKey=new SalesKey();
+    	salesKey.setHostName(salesRequest.getHostname());
+    	salesKey.setTimestamp(salesRequest.getDate());
+    	LOGGER.info("Leaving.");
+    	salesTemplateImpl.updateSalesWithNewType(salesKey, salesRequest);
     }
 }
