@@ -8,10 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 public class SalesKey implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
+	
 	@JsonSerialize(using = CustomDateSerializer.class)
 	Date timestamp;
 	String hostName;

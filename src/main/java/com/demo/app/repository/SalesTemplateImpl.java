@@ -3,9 +3,6 @@ package com.demo.app.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +20,7 @@ import com.mongodb.WriteResult;
 @Component
 public class SalesTemplateImpl {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SalesTemplateImpl.class);
+	
 	@Autowired
 	private MongoTemplate mongoTemplate;
 	
@@ -33,45 +31,132 @@ public class SalesTemplateImpl {
 	}
 	
 	public Sales findSales(SalesKey salesKey){
-		return salesRepository.filterBySalesKey(salesKey);
+		LOGGER.debug("Entering");
+		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		Sales sales=salesRepository.filterBySalesKey(salesKey);
+		LOGGER.debug("Leaving");
+		return sales;
 	}
+	
+	private Query getQueryObjectFromRequest(SalesKey salesKey,SalesRequest salesRequest){
+		Query query = new Query(
+				Criteria.where("_id").is(salesKey)
+				.andOperator(
+								Criteria.where("salesData.type").is(salesRequest.getType())
+							)
+				);
+		return query;
+	}
+
+	public boolean isTypeExists(SalesKey salesKey,SalesRequest salesRequest){
+		LOGGER.debug("Entering");
+		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
+		
+		boolean status=false;
+				
+		//Construct Query Object from Request object
+		Query query=getQueryObjectFromRequest(salesKey,salesRequest);
+		
+		//Find Sales Object using the query object
+		Sales sales=mongoTemplate.findOne(query, Sales.class);
+		
+		
+		if(null!=sales){
+			status=true;
+		}
+		
+		LOGGER.debug("Leaving");
+		return status;
+	}
+	
 	public void updateSales(SalesKey salesKey,SalesRequest salesRequest){
-		Query query = new Query(Criteria.where("_id").is(salesKey).andOperator(Criteria.where("salesData.type").is(salesRequest.getType())));
+		LOGGER.debug("Entering");
+		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
+		
+		//Construct Query Object from Request object
+		Query query=getQueryObjectFromRequest(salesKey,salesRequest);
+		
+		
+		//Construct Update Object using Request Object
 		Update update=new Update();
 		update.set("totalAmount", salesRequest.getTotalAmount());
 		update.push("salesData.$.volume",salesRequest.getVolume());
 		
+		
+		//Find and Update Document 
 		WriteResult result=mongoTemplate.updateFirst(query,update,Sales.class);
-		LOGGER.info("WriteResult:" + result);
+		
+		LOGGER.debug("WriteResult:" + result);
+		LOGGER.debug("Leaving");
 	}
 	
 	public void updateSalesWithNewType(SalesKey salesKey,SalesRequest salesRequest){
-		Query query = new Query(Criteria.where("_id").is(salesKey));
-		BsonDocument doc=new BsonDocument();
-		String[] volumeArr=new String[]{"1","2","3","4","5"};
-		BsonArray bsonArr=new BsonArray();
-		for(int i=0;i<volumeArr.length;i++){
-			bsonArr.add(i,new BsonString(volumeArr[0]));
+		
+		LOGGER.debug("Entering");
+		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
+		
+		//Check if type already exists
+		if(isTypeExists(salesKey,salesRequest)){
+			LOGGER.debug("Type Exists , proceeding to update it now");
+			updateSales(salesKey,salesRequest);
+			return;
 		}
-				
-
-    	
-		doc.append("type", new BsonString(salesRequest.getType()));
-		doc.append("volume", bsonArr);
+		
+		
+		SalesData salesData=new SalesData(
+				salesRequest.getType(),
+				new String[]{salesRequest.getVolume()}
+			 );
+		
+		//Construct Query Object
+		Query query = new Query(
+									Criteria.where("_id").is(salesKey)
+							   );
+		
+		//Construct Update Object using Request Object
 		Update update=new Update();
-		update.addToSet("salesData",doc);
-			
-		WriteResult result=mongoTemplate.updateFirst(query,update,Sales.class);
-		LOGGER.info("WriteResult:" + result);
+		update.push("salesData",salesData);
+		
+		//Find and Update Document
+		WriteResult result=mongoTemplate.upsert(query,update,Sales.class);
+		
+		LOGGER.debug("WriteResult:" + result);
+		LOGGER.debug("Leaving");
 	}
-	public Sales createSales(SalesKey salesKey,SalesData salesData,String totalAmount){
+	
+	
+	public Sales createSales(SalesKey salesKey,SalesRequest salesRequest){
+		LOGGER.debug("Entering");
+		
+		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
+		
+		
+		//Construct Sales object from Request object and SalesKey Object
 		Sales sales=new Sales();
 		sales.setSalesKey(salesKey);
-		sales.setTotalAmount(totalAmount);
-		List<SalesData> salesDataList=new ArrayList();
+		sales.setTotalAmount(salesRequest.getTotalAmount());
+		
+		//Construct SalesData object from Request object
+		SalesData salesData=new SalesData(
+											salesRequest.getType(),
+											new String[]{salesRequest.getVolume()}
+										 );
+		
+		//Construct SalesData object Collection using SalesData Object
+		List<SalesData> salesDataList=new ArrayList<SalesData>();
 		salesDataList.add(salesData);
 		sales.setSalesData(salesDataList);
-		return salesRepository.save(sales);
+		
+		
+		//Save the sales Object and return the Saved Sales Object
+		Sales newSales=salesRepository.save(sales);
+		
+		LOGGER.debug("Leaving");
+		return newSales;
 		
 	}
 

@@ -6,6 +6,11 @@ public class SalesData {
 
 	String type;
 	String[] volume;
+	
+	public SalesData(String type, String[] volume) {
+		this.type=type;
+		this.volume=volume;
+	}
 	@Override
 	public String toString() {
 		return "SalesData [type=" + type + ", volume=" + Arrays.toString(volume) + "]";

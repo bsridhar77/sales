@@ -10,14 +10,19 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
 public class CustomDateSerializer extends StdSerializer<Date> {
-    private SimpleDateFormat formatter = 
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private SimpleDateFormat formatter = 
       new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
  
     public CustomDateSerializer() {
         this(null);
     }
  
-    public CustomDateSerializer(Class t) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	public CustomDateSerializer(Class t) {
         super(t);
     }
      
