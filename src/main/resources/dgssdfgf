@@ -1,0 +1,68 @@
+//db.testcol.createIndex( { servicename: 1, timestamp:1 , servicename: 1, ip:1 , port:1} )
+
+//db.getCollection('testcol').find({})
+
+//BySeconds
+//1.date
+//2.time
+//2 datetime - java conversion
+
+db.getCollection('metricsByMin').find(
+{
+    "$and" : [
+            { "timestamp" : { "$gte" : { "$date" : "2016-08-26T00:19:07.619Z"}}} ,
+            { "servicename" : "plan"} , { "ip" : "10.219.12.77"} , { "port" : "1080"} ,
+            { "metrics.type" : "httpsessions.active"}]} 
+)
+
+
+db.getCollection('metricsByMin').find(
+{ "$and" : [
+    {
+        "timestamp" : {
+                        "$gte" : { 
+                                        "$date" : "2016-08-26T11:53:13.182Z"),"
+                                }
+                      }
+    } , 
+    {
+                    "servicename" : "plan"
+    },
+    {
+                    "ip" : "10.219.12.77"
+    },
+    { 
+                     "port" : "1080"
+    },
+    {
+                    "metrics.type" : "httpsessions.active"
+    }
+  ]
+    }
+)    
+
+
+db.getCollection('metricsByMin').find(
+{
+        "ip" : "10.219.12.77",
+        "port" : "1080",
+        "servicename" : "plan",
+        "metrics.type":"heap.init"
+},
+{
+   
+    "timestamp":1,
+    "metrics.type":1,
+    "metrics.$.value":1
+}
+)
+
+//using java convert timestamp to time only
+
+
+//metricByDay
+
+//input : 2 dates
+
+//output: remove time 
+
