@@ -6,8 +6,37 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class SalesRequest {
 	
-	@JsonFormat(pattern="dd-MM-yyyy hh:mm")
+	@JsonFormat(pattern="dd-MM-yyyy")
 	Date date;
+	String time;
+	String fromTime;
+	public String getToTime() {
+		return toTime;
+	}
+	public void setToTime(String toTime) {
+		this.toTime = toTime;
+	}
+	public String getFromTime() {
+		return fromTime;
+	}
+	public void setFromTime(String fromTime) {
+		this.fromTime = fromTime;
+	}
+	String toTime;
+	
+	String hour;
+	public String getHour() {
+		return hour;
+	}
+	public void setHour(String hour) {
+		this.hour = hour;
+	}
+	public String getTime() {
+		return time;
+	}
+	public void setTime(String time) {
+		this.time = time;
+	}
 	String hostname;
 	String totalAmount;
 	String type;

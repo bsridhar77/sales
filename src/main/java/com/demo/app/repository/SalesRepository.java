@@ -10,4 +10,8 @@ import com.demo.app.model.SalesKey;
 public interface SalesRepository extends MongoRepository<Sales, String> {
 	@Query(value = "{ '_id' : ?0 }")
 	public Sales filterBySalesKey(SalesKey salesKey);
+	
+	
+	
 }
+ 

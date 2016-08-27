@@ -1,5 +1,7 @@
 package com.demo.app.service;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,31 +11,28 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.demo.app.model.Sales;
-import com.demo.app.model.SalesKey;
 import com.demo.app.repository.SalesTemplateImpl;
 import com.demo.app.request.SalesRequest;
-import com.demo.app.util.SalesHelper;
+
+
 @RestController
 public class SalesService {
 	
 	@Autowired
 	private SalesTemplateImpl salesTemplateImpl;
 	
-	@Autowired
-	private SalesHelper salesHelper;
+	
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SalesService.class);
 	
     @RequestMapping(value = "/getsales", method = RequestMethod.POST)
-	public Sales fetchSales(@RequestBody SalesRequest salesRequest) {
+	public List<Sales> fetchSales(@RequestBody SalesRequest salesRequest) {
     	LOGGER.debug("Entering...");
     	LOGGER.debug("Received...salesRequest:::" + salesRequest);
-    	
-    	SalesKey salesKey=new SalesKey();
-    	salesKey.setHostName(salesRequest.getHostname());
-    	salesKey.setTimestamp(salesRequest.getDate());
+      	
     	LOGGER.debug("Leaving.");
-    	return salesTemplateImpl.findSales(salesKey);
+    	//return salesTemplateImpl.findSales(salesRequest);
+    	return salesTemplateImpl.getDataBetweenDates(salesRequest);
     }
    
     @RequestMapping(value = "/sales", method = RequestMethod.POST)
@@ -41,11 +40,8 @@ public class SalesService {
     	LOGGER.debug("Entering...");
     	LOGGER.debug("Received...salesRequest:::" + salesRequest);
     	
-    	//Construct SalesKey Object
-    	SalesKey salesKey=salesHelper.getSalesKeyFromRequest(salesRequest.getHostname(),salesRequest.getDate());
-    	
     	//Create Sales Object
-    	Sales sales=salesTemplateImpl.createSales(salesKey,salesRequest);
+    	Sales sales=salesTemplateImpl.createSales(salesRequest);
     	LOGGER.debug("Sale Created:" + sales);
     	
     	return sales;
@@ -57,11 +53,8 @@ public class SalesService {
     	LOGGER.debug("Entering...");
     	LOGGER.debug("Received...salesRequest:::" + salesRequest);
     	
-    	//Construct SalesKey Object
-    	SalesKey salesKey=salesHelper.getSalesKeyFromRequest(salesRequest.getHostname(),salesRequest.getDate());
-    	
     	//Update Sales Object with Request Object
-    	salesTemplateImpl.updateSales(salesKey, salesRequest);
+    	salesTemplateImpl.updateSales(salesRequest);
     	LOGGER.debug("Leaving.");
     }
     
@@ -71,11 +64,8 @@ public class SalesService {
     	LOGGER.debug("Entering...");
     	LOGGER.debug("Received...salesRequest:::" + salesRequest);
     	
-    	//Construct SalesKey Object
-    	SalesKey salesKey=salesHelper.getSalesKeyFromRequest(salesRequest.getHostname(),salesRequest.getDate());
-    	
     	//Update Sales Object with New Type from Request Object
-    	salesTemplateImpl.updateSalesWithNewType(salesKey, salesRequest);
+    	salesTemplateImpl.updateSalesWithNewType(salesRequest);
     	LOGGER.debug("Sale Updated:");
     	LOGGER.debug("Leaving.");
     }

@@ -1,7 +1,10 @@
 package com.demo.app.repository;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +15,12 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
+import com.demo.app.model.CustomData;
 import com.demo.app.model.Sales;
 import com.demo.app.model.SalesData;
 import com.demo.app.model.SalesKey;
 import com.demo.app.request.SalesRequest;
+import com.demo.app.util.SalesHelper;
 import com.mongodb.WriteResult;
 @Component
 public class SalesTemplateImpl {
@@ -25,14 +30,42 @@ public class SalesTemplateImpl {
 	private MongoTemplate mongoTemplate;
 	
 	@Autowired
+	private SalesHelper salesHelper;
+	
+	@Autowired
 	SalesRepository salesRepository;
 	public void saveSales(Sales sales){
 		salesRepository.save(sales);
 	}
+	public List<Sales> getDataBetweenDates(SalesRequest salesRequest){
+		Date fromDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getFromTime());
+		Date toDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getToTime());
+		
+		
+		
+		Criteria timestampCriteria=Criteria.where("_id.timestamp").gte(fromDateTime).lte(toDateTime);
+		Criteria customDateTypeCriteria=Criteria.where("customData.type").is(salesRequest.getType());
+		Criteria hostNameCriteria=Criteria.where("_id.hostName").is(salesRequest.getHostname());
+		Criteria dateCriteria=new Criteria();
+		dateCriteria.andOperator(timestampCriteria,customDateTypeCriteria,hostNameCriteria,dateCriteria);
+		Query query=new Query();
+		query.addCriteria(dateCriteria);
+				      
+		
+		query.fields().include("customData.mydata." + salesRequest.getHour());
+		//query.fields().include("customData.mydata.9");
+		query.fields().exclude("_id");
+		//Find Sales Object using the query object
+		List<Sales> salesList=mongoTemplate.find(query, Sales.class);
 	
-	public Sales findSales(SalesKey salesKey){
+		return salesList;
+		
+	}
+	public Sales findSales(SalesRequest salesRequest){
 		LOGGER.debug("Entering");
-		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		
+    	//Construct SalesKey Object
+    	SalesKey salesKey=salesHelper.getSalesKeyFromRequest(salesRequest.getHostname(),salesRequest.getDate(),salesRequest.getTime());
 		Sales sales=salesRepository.filterBySalesKey(salesKey);
 		LOGGER.debug("Leaving");
 		return sales;
@@ -42,7 +75,8 @@ public class SalesTemplateImpl {
 		Query query = new Query(
 				Criteria.where("_id").is(salesKey)
 				.andOperator(
-								Criteria.where("salesData.type").is(salesRequest.getType())
+								Criteria.where("salesData.type").is(salesRequest.getType()),
+								Criteria.where("customData.type").is(salesRequest.getType())
 							)
 				);
 		return query;
@@ -70,11 +104,14 @@ public class SalesTemplateImpl {
 		return status;
 	}
 	
-	public void updateSales(SalesKey salesKey,SalesRequest salesRequest){
+	public void updateSales(SalesRequest salesRequest){
 		LOGGER.debug("Entering");
-		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		
 		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
 		
+		
+		//Construct SalesKey Object
+    	SalesKey salesKey=salesHelper.getSalesKeyFromRequest(salesRequest.getHostname(),salesRequest.getDate(),salesRequest.getTime());
 		//Construct Query Object from Request object
 		Query query=getQueryObjectFromRequest(salesKey,salesRequest);
 		
@@ -83,7 +120,7 @@ public class SalesTemplateImpl {
 		Update update=new Update();
 		update.set("totalAmount", salesRequest.getTotalAmount());
 		update.push("salesData.$.volume",salesRequest.getVolume());
-		
+		update.set("customData.$.mydata." + salesRequest.getHour() ,salesRequest.getVolume());
 		
 		//Find and Update Document 
 		WriteResult result=mongoTemplate.updateFirst(query,update,Sales.class);
@@ -92,16 +129,19 @@ public class SalesTemplateImpl {
 		LOGGER.debug("Leaving");
 	}
 	
-	public void updateSalesWithNewType(SalesKey salesKey,SalesRequest salesRequest){
+	public void updateSalesWithNewType(SalesRequest salesRequest){
 		
 		LOGGER.debug("Entering");
-		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		
 		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
 		
+		//Construct SalesKey Object
+    	SalesKey salesKey=salesHelper.getSalesKeyFromRequest(salesRequest.getHostname(),salesRequest.getDate(),salesRequest.getTime());
+    	
 		//Check if type already exists
 		if(isTypeExists(salesKey,salesRequest)){
 			LOGGER.debug("Type Exists , proceeding to update it now");
-			updateSales(salesKey,salesRequest);
+			updateSales(salesRequest);
 			return;
 		}
 		
@@ -128,12 +168,14 @@ public class SalesTemplateImpl {
 	}
 	
 	
-	public Sales createSales(SalesKey salesKey,SalesRequest salesRequest){
+	public Sales createSales(SalesRequest salesRequest){
 		LOGGER.debug("Entering");
 		
-		LOGGER.debug("Received SalesKey obj:" + salesKey);
+		
 		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
 		
+		//Construct SalesKey Object
+    	SalesKey salesKey=salesHelper.getSalesKeyFromRequest(salesRequest.getHostname(),salesRequest.getDate(),salesRequest.getTime());
 		
 		//Construct Sales object from Request object and SalesKey Object
 		Sales sales=new Sales();
@@ -151,13 +193,26 @@ public class SalesTemplateImpl {
 		salesDataList.add(salesData);
 		sales.setSalesData(salesDataList);
 		
-		
+		CustomData customData=new CustomData();
+		customData.setMydata(getMyDataMap());
+		customData.setType(salesRequest.getType());
+		List<CustomData> customDataList=new ArrayList<CustomData>();
+		customDataList.add(customData);
+		sales.setCustomData(customDataList);
 		//Save the sales Object and return the Saved Sales Object
 		Sales newSales=salesRepository.save(sales);
 		
 		LOGGER.debug("Leaving");
 		return newSales;
 		
+	}
+
+	private Map<String, String> getMyDataMap() {
+		Map<String,String> mintuteMap=new HashMap<String,String>();
+		for(int i=0;i<60;i++){
+			mintuteMap.put(i+"", "");
+		}
+		return mintuteMap;
 	}
 
 }

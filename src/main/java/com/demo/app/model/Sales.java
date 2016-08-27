@@ -13,6 +13,16 @@ SalesKey salesKey;
 
 List<SalesData> salesData;
 
+List<CustomData> customData;
+
+public List<CustomData> getCustomData() {
+	return customData;
+}
+
+public void setCustomData(List<CustomData> customData) {
+	this.customData = customData;
+}
+
 String totalAmount;
 
 public SalesKey getSalesKey() {
