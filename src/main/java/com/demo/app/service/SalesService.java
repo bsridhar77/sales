@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.demo.app.model.CustomData;
+import com.demo.app.model.ResponseData;
 import com.demo.app.model.Sales;
 import com.demo.app.repository.SalesTemplateImpl;
 import com.demo.app.request.SalesRequest;
@@ -26,13 +28,13 @@ public class SalesService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SalesService.class);
 	
     @RequestMapping(value = "/getsales", method = RequestMethod.POST)
-	public List<Sales> fetchSales(@RequestBody SalesRequest salesRequest) {
+	public List<ResponseData> fetchSales(@RequestBody SalesRequest salesRequest) {
     	LOGGER.debug("Entering...");
     	LOGGER.debug("Received...salesRequest:::" + salesRequest);
       	
     	LOGGER.debug("Leaving.");
     	//return salesTemplateImpl.findSales(salesRequest);
-    	return salesTemplateImpl.getDataBetweenDates(salesRequest);
+    	 return salesTemplateImpl.getDataBetweenDatesUsingCustomAggregationSlice(salesRequest);
     }
    
     @RequestMapping(value = "/sales", method = RequestMethod.POST)

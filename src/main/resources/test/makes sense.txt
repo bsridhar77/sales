@@ -1,0 +1,59 @@
+minute
+======
+timestamp(date+hour+minute)
+	[
+		0-10
+		10-20
+		20-30
+		30-40
+		40-50
+		50-60
+	]
+Every doc is for a minute. Eacb doc will have the average value for every 10 seconds in a minute.
+We will have 6 data points for 6 blocks in a minute stored as 6 element array.
+We will have 60 * 24=1440 docs in minute collection.
+
+
+Will the above the structure answer the question,
+show second level metrics between 10:15 To 10:30 on a specific date, 26/06/2015
+show second level metrics between 10:45 To 11:30 on a specific date, 26/06/2015
+
+show second level metrics between 23.30 To 00.30 on a specific date, 26/06/2015
+
+hour
+=====
+timestamp(date+hour)
+	[0-59]
+
+Every doc is for a hour. Each doc will have the average value for every minute in a hour.
+We will have 60 data points one data point for  each for the 60 minutes in a hour stored as 60 element array.
+We will have 24 docs in minutes collection for 24 hours of a day.
+
+Will the above the structure answer the question,
+show minute level metrics between 10:15 To 10:30 on a specific date, 26/06/2015
+show minute level metrics between 10:45 To 11:30 on a specific date, 26/06/2015
+
+show minute level metrics between 23.30 To 00.30 on a specific date, 26/06/2015
+
+day
+====
+timestamp(date+hour+day)
+
+	[0-24]
+	
+	Each data point is(sum,count) where sum is the total of metrics for that hour and count refers to for how many minutes of that hour the sum is.
+	sum=sum+hour
+	count=count+1
+	
+Every doc is for a day. Each docs will have the average value for every hour in a day.
+We will have 24 data points one data point for each for the 24 hours in a day stored as 24 element array.
+We will have 31 docs in day collection for each of the 31( or 28/29/30) days of a month.
+
+Will the above the structure answer the question,
+show hour level metrics between 10:00 To 12:00 on a specific date, 26/06/2015
+show hour level metrics between 10:30 To 11:30 on a specific date, 26/06/2015
+	
+
+show hour level metrics between 23.30 To 00.30 on a specific date, 26/06/2015
+
+show day level metrics between 25/06/2015 and 26/06/2015 

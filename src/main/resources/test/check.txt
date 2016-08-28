@@ -1,0 +1,91 @@
+db.getCollection('sales').find(
+{
+    "_id" : {
+        "timestamp" : ISODate("2016-08-26T18:00:00.000-06:30"),
+        "hostName" : "agra"
+    }
+            ,"salesData.type":"electronics"
+}, 
+{
+  //  "_id.timestamp":1 
+  //  "salesData.$.volume": 1 
+    //"hobby":1
+    // ,"salesData.type":"electronics"
+    "_id":0,
+    _class:0,
+    hobby:0,
+    "salesData.$.volume": { $slice: [ 1, 1 ] }
+  }
+)
+  
+  db.sales.aggregate(
+    [ 
+        { 
+              $match : {
+                            "_id" : 
+                              {
+                                "timestamp" : ISODate("2016-08-26T18:00:00.000-06:30"),
+                                "hostName" : "agra"
+                            },
+                             "salesData.type":"electronics"
+                        }
+        } ,
+       { $project: { 
+        items: {
+            $filter: {
+               input: "$salesData",
+               as: "item",
+               cond: { $eq: [ "$$item.type", "electronics" ] }
+            }
+       
+        }
+    }
+        
+} ,
+        
+        { 
+            $project : { 
+                            "items" : 1 
+                        } 
+        },
+       { $unwind : "$items" }
+       
+  
+    ]
+);
+  
+  db.sales.aggregate( [ { $unwind : "$salesData" } ] )
+  
+    db.sales.aggregate([ 
+ 
+    { 
+      $match : 
+      {
+                    "_id" : 
+                      {
+                        "timestamp" : ISODate("2016-08-26T18:00:00.000-06:30"),
+                        "hostName" : "agra"
+                    }
+               
+                }
+  } ,
+  { $project: { 
+        items: {
+            $filter: {
+               input: "$salesData",
+               as: "item",
+               cond: { $eq: [ "$$item.type", "electronics" ] }
+            }
+       
+        }
+    }
+        
+}  ,
+
+{ $unwind : "$items.volume" }//,
+//{
+    
+   // $project : { hobby : 1 , "items.volume" : 1 }
+//}
+
+])

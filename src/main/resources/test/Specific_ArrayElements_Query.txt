@@ -1,0 +1,71 @@
+Document Structure
+==================
+{
+    "_id" : {
+        "timestamp" : ISODate("2016-08-27T06:00:00.000+05:30"),
+        "category" : "sales"
+    },
+    "leveldata" : [ 
+        {
+            "level" : "manager",
+            "volume" : [ 
+			    "45", 
+                "145", 
+                "2145"
+            ]
+        }, 
+        {
+            "level" : "engineer",
+            "volume" : [ 
+                "2145"
+            ]
+        }
+    ]
+}
+
+"leveldata.volume" embedded array document field can have around 60 elements in it.
+
+
+In this case, "leveldata" is an array document.
+
+And "volume" is another array field inside "leveldata".
+
+
+We have a requirement to fetch specific elements from the "volume" array field.
+
+For example, elements from position 1-5 within the array element "volume".
+
+Also, we have used positional operator to fetch the specific array element in this case based on "leveldata.level" field.
+
+
+I tried using the $slice operator. But, it seems to work only with arrays not with array inside array fields, as that
+is the case in my scenario.
+
+
+We can do it from the application layer, but that would mean loading the entire the array element from mongo db to memory and
+then fetching the desired elements. We want to avoid doing that and fetch it directly from mongodb.
+
+The below query is what I had used to fetch the elements as required.
+
+
+
+db.getCollection('mycollection').find(
+{
+    "_id" : {
+          "timestamp" : ISODate("2016-08-26T18:00:00.000-06:30"),
+          "category" : "sales"
+    }
+   ,
+	"leveldata.level":"manager"
+}, 
+{
+   "leveldata.$.volume": { $slice: [ 1, 5 ] }
+}
+)
+
+Can you please let us know your suggestions on how to address this issue.
+
+
+Thanks,
+Sridhar
+

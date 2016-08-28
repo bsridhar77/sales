@@ -1,6 +1,12 @@
 package com.demo.app.repository;
 
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.match;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.newAggregation;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.project;
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.unwind;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -10,17 +16,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import com.demo.app.model.CustomData;
+import com.demo.app.model.ResponseData;
 import com.demo.app.model.Sales;
 import com.demo.app.model.SalesData;
 import com.demo.app.model.SalesKey;
 import com.demo.app.request.SalesRequest;
 import com.demo.app.util.SalesHelper;
+import com.mongodb.BasicDBObject;
 import com.mongodb.WriteResult;
 @Component
 public class SalesTemplateImpl {
@@ -37,17 +47,116 @@ public class SalesTemplateImpl {
 	public void saveSales(Sales sales){
 		salesRepository.save(sales);
 	}
+	
+	public List<ResponseData> getDataBetweenDatesUsingAggregation(SalesRequest salesRequest){
+		
+		Date fromDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getFromTime());
+		//Date toDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getToTime());
+		
+		Criteria customDateTypeCriteria=Criteria.where("customData.type").is(salesRequest.getType());
+		//Criteria timestampCriteria=Criteria.where("_id.timestamp").is(fromDateTime);
+		Criteria hostNameCriteria=Criteria.where("_id.hostName").is(salesRequest.getHostname());
+		Criteria dateCriteria=new Criteria();
+		dateCriteria.andOperator(hostNameCriteria,dateCriteria);
+		
+		Aggregation agg = newAggregation(Sales.class, 
+				 match(dateCriteria),
+				 unwind("$salesData"),
+				 match(customDateTypeCriteria),
+				 project("customData.mydata.8")
+			);
+
+		
+	
+		//Convert the aggregation result into a List
+		AggregationResults<ResponseData> groupResults
+			= mongoTemplate.aggregate(agg, Sales.class, ResponseData.class);
+		List<ResponseData> result = groupResults.getMappedResults();
+		return result;
+		
+	}
+	
+	
+
+	public List<ResponseData> getDataBetweenDatesUsingCustomAggregationSlice(SalesRequest salesRequest){
+		
+		Date fromDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getFromTime());
+		//Date toDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getToTime());
+		
+		Criteria customDateTypeCriteria=Criteria.where("salesData.type").is(salesRequest.getType());
+		Criteria timestampCriteria=Criteria.where("_id.timestamp").gte(fromDateTime);
+		Criteria hostNameCriteria=Criteria.where("_id.hostName").is(salesRequest.getHostname());
+		
+		Criteria dateCriteria=new Criteria();
+		
+		dateCriteria.andOperator(timestampCriteria,hostNameCriteria,dateCriteria);
+		
+		
+		
+		
+		Aggregation aggregation = newAggregation(
+				 match(dateCriteria),
+				 unwind("$salesData"),
+				 match(customDateTypeCriteria),
+				 spliceArray("salesData.volume",0,1)
+	    );
+			
+		//Convert the aggregation result into a List
+		AggregationResults<ResponseData> groupResults
+			= mongoTemplate.aggregate(aggregation, Sales.class, ResponseData.class);
+		List<ResponseData> result = groupResults.getMappedResults();
+		return result;
+		
+	}
+  private CustomOperation spliceArray(String fieldToSlice,int startPos,int count){
+	  
+	  return new CustomOperation(
+              new BasicDBObject("$project",
+                  new BasicDBObject("_id",0)
+                          .append("mydata" , new BasicDBObject("$slice",Arrays.asList(
+                                  "$" + fieldToSlice,
+                                  startPos,count
+                          )))   ));
+  }
+	public List<ResponseData> getDataBetweenDatesUsingAggregationSlice(SalesRequest salesRequest){
+		
+		Date fromDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getFromTime());
+		//Date toDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getToTime());
+		
+		Criteria customDateTypeCriteria=Criteria.where("customData.type").is(salesRequest.getType());
+		//Criteria timestampCriteria=Criteria.where("_id.timestamp").is(fromDateTime);
+		Criteria hostNameCriteria=Criteria.where("_id.hostName").is(salesRequest.getHostname());
+		Criteria dateCriteria=new Criteria();
+		dateCriteria.andOperator(hostNameCriteria,dateCriteria);
+		
+		Aggregation agg = newAggregation(Sales.class, 
+				 match(dateCriteria),
+				 unwind("$salesData"),
+				 match(customDateTypeCriteria)//,
+				// project().and("$salesData.volume").slice(10, 5).as("renamed")
+				);
+
+		
+		//ProjectionOperation operation = Aggregation.project().and("field").slice(10).as("renamed");
+		//Convert the aggregation result into a List
+		AggregationResults<ResponseData> groupResults
+			= mongoTemplate.aggregate(agg, Sales.class, ResponseData.class);
+		List<ResponseData> result = groupResults.getMappedResults();
+		return result;
+		
+	}
+	
 	public List<Sales> getDataBetweenDates(SalesRequest salesRequest){
 		Date fromDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getFromTime());
 		Date toDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getToTime());
 		
 		
 		
-		Criteria timestampCriteria=Criteria.where("_id.timestamp").gte(fromDateTime).lte(toDateTime);
+		//Criteria timestampCriteria=Criteria.where("_id.timestamp").gte(fromDateTime).lte(toDateTime);
 		Criteria customDateTypeCriteria=Criteria.where("customData.type").is(salesRequest.getType());
 		Criteria hostNameCriteria=Criteria.where("_id.hostName").is(salesRequest.getHostname());
 		Criteria dateCriteria=new Criteria();
-		dateCriteria.andOperator(timestampCriteria,customDateTypeCriteria,hostNameCriteria,dateCriteria);
+		dateCriteria.andOperator(customDateTypeCriteria,hostNameCriteria,dateCriteria);
 		Query query=new Query();
 		query.addCriteria(dateCriteria);
 				      
