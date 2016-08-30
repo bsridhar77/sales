@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import com.demo.app.model.ResponseData;
 import com.demo.app.model.Sales;
 import com.demo.app.model.SalesData;
+import com.demo.app.model.SalesHour;
 import com.demo.app.request.SalesRequest;
 import com.demo.app.util.SalesHelper;
 import com.mongodb.BasicDBObject;
@@ -39,15 +40,16 @@ public class SalesTemplateImpl {
 	
 	@Autowired
 	SalesRepository salesRepository;
+	
+	@Autowired
+	SalesHourRepository salesHourRepository;
 	public void saveSales(Sales sales){
 		salesRepository.save(sales);
 	}
 	
+ private Aggregation getAggregation(SalesRequest salesRequest){
+	 
 
-	
-
-	public List<ResponseData> getDataBetweenDatesUsingCustomAggregationSlice(SalesRequest salesRequest){
-		
 		Date fromDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getFromTime());
 		Date toDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getToTime());
 		
@@ -60,19 +62,39 @@ public class SalesTemplateImpl {
 		dateCriteria.andOperator(timestampCriteria,hostNameCriteria,dateCriteria);
 		
 		
-		
-		
 		Aggregation aggregation = newAggregation(
 				 match(dateCriteria),
 				 unwind("$salesData"),
 				 match(customDateTypeCriteria),
 				 spliceArray("salesData.volume",0,1)
 	    );
-			
-		//Convert the aggregation result into a List
+		return aggregation;
+ }
+	
+
+	public List<ResponseData> getSalesData(SalesRequest salesRequest){
+		
+		
+		Aggregation aggregation=getAggregation(salesRequest);
+		
 		AggregationResults<ResponseData> groupResults
 			= mongoTemplate.aggregate(aggregation, Sales.class, ResponseData.class);
 		List<ResponseData> result = groupResults.getMappedResults();
+		
+		return result;
+		
+	}
+	
+public List<ResponseData> getSalesHourData(SalesRequest salesRequest){
+		
+		
+		Aggregation aggregation=getAggregation(salesRequest);
+			
+		
+		AggregationResults<ResponseData> groupResults
+			= mongoTemplate.aggregate(aggregation, SalesHour.class, ResponseData.class);
+		List<ResponseData> result = groupResults.getMappedResults();
+		
 		return result;
 		
 	}
@@ -95,8 +117,10 @@ public class SalesTemplateImpl {
 	}
 	
 	private Query getQueryObjectFromRequest(SalesRequest salesRequest){
+		
+		Date fromDateTime=salesHelper.getDateTime(salesRequest.getSalesHourTimestamp(), salesRequest.getTime());
 		Query query = new Query(
-				Criteria.where("timestamp").is(salesRequest.getDate())
+				Criteria.where("timestamp").is(fromDateTime)
 				.andOperator(
 								Criteria.where("salesData.type").is(salesRequest.getType()),
 								Criteria.where("hostName").is(salesRequest.getHostname())
@@ -222,6 +246,66 @@ public class SalesTemplateImpl {
 		
 		LOGGER.debug("Leaving");
 		return newSales;
+		
+	}
+
+
+
+
+	public SalesHour createSalesHour(SalesRequest salesRequest) {
+		LOGGER.debug("Entering");
+		
+		
+		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
+		
+		
+		//Construct Sales object from Request object and SalesKey Object
+		SalesHour salesHour=new SalesHour();
+		salesHour.setId(salesRequest.getSalesId());
+		salesHour.setTotalAmount(salesRequest.getTotalAmount());
+		salesHour.setHostName(salesRequest.getHostname());
+		salesHour.setTimestamp(salesHelper.getDateWithoutMinutesSeconds(new Date()));
+		
+		//Construct SalesData object from Request object
+		SalesData salesData=new SalesData(
+											salesRequest.getType(),
+											new String[]{salesRequest.getVolume()}
+										 );
+		
+		//Construct SalesData object Collection using SalesData Object
+		List<SalesData> salesDataList=new ArrayList<SalesData>();
+		salesDataList.add(salesData);
+		salesHour.setSalesData(salesDataList);
+		
+		
+		
+		
+		//Save the sales Object and return the Saved Sales Object
+		SalesHour newSalesHour=salesHourRepository.save(salesHour);
+		
+		LOGGER.debug("Leaving");
+		return newSalesHour;
+	}
+
+	public void updateSalesHour(SalesRequest salesRequest) {
+	LOGGER.debug("Entering");
+		
+		LOGGER.debug("Received SalesRequest obj:" + salesRequest);
+		
+		
+		Query query=getQueryObjectFromRequest(salesRequest);
+		
+		
+		//Construct Update Object using Request Object
+		Update update=new Update();
+		update.set("totalAmount", salesRequest.getTotalAmount());
+		update.push("salesData.$.volume",salesRequest.getVolume());
+			
+		//Find and Update Document 
+		WriteResult result=mongoTemplate.updateFirst(query,update,SalesHour.class);
+		
+		LOGGER.debug("WriteResult:" + result);
+		LOGGER.debug("Leaving");
 		
 	}
 

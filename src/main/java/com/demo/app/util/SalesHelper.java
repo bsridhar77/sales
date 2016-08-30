@@ -72,4 +72,13 @@ public class SalesHelper {
 	          year, month+1, day, hour, minute, second);
 		new SalesHelper().getDateTime(new Date(),"03:00");
 	}
+
+	public Date getDateWithoutMinutesSeconds(Date date) {
+		 Calendar calendar = Calendar.getInstance();
+		 calendar.setTime(date);
+		 calendar.set(Calendar.MINUTE, 0);
+		 calendar.set(Calendar.SECOND, 0);
+	     calendar.set(Calendar.MILLISECOND, 0);
+	     return calendar.getTime();
+	}
 }

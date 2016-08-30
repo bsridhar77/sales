@@ -4,22 +4,8 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-public class SalesRequest {
-	@JsonFormat(pattern="dd-MM-yyyy")
-	Date salesHourTimestamp;
+public class SalesHourRequest {
 	
-	public Date getSalesHourTimestamp() {
-		return salesHourTimestamp;
-	}
-	public void setSalesHourTimestamp(Date salesHourTimestamp) {
-		this.salesHourTimestamp = salesHourTimestamp;
-	}
-	public Date getTimestamp() {
-		return timestamp;
-	}
-	public void setTimestamp(Date timestamp) {
-		this.timestamp = timestamp;
-	}
 	@JsonFormat(pattern="dd-MM-yyyy")
 	Date timestamp;
 	String time;

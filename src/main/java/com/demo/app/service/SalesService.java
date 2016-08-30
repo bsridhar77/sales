@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.demo.app.model.CustomData;
 import com.demo.app.model.ResponseData;
 import com.demo.app.model.Sales;
+import com.demo.app.model.SalesHour;
 import com.demo.app.repository.SalesTemplateImpl;
 import com.demo.app.request.SalesRequest;
 
@@ -34,7 +34,18 @@ public class SalesService {
       	
     	LOGGER.debug("Leaving.");
     	//return salesTemplateImpl.findSales(salesRequest);
-    	 return salesTemplateImpl.getDataBetweenDatesUsingCustomAggregationSlice(salesRequest);
+    	 return salesTemplateImpl.getSalesData(salesRequest);
+    }
+    
+
+    @RequestMapping(value = "/getsaleshour", method = RequestMethod.POST)
+	public List<ResponseData> fetchSalesHour(@RequestBody SalesRequest salesRequest) {
+    	LOGGER.debug("Entering...");
+    	LOGGER.debug("Received...salesRequest:::" + salesRequest);
+      	
+    	LOGGER.debug("Leaving.");
+    	//return salesTemplateImpl.findSales(salesRequest);
+    	 return salesTemplateImpl.getSalesHourData(salesRequest);
     }
    
     @RequestMapping(value = "/sales", method = RequestMethod.POST)
@@ -49,7 +60,18 @@ public class SalesService {
     	return sales;
     }
 
-    
+
+    @RequestMapping(value = "/saleshour", method = RequestMethod.POST)
+	public SalesHour createSalesHour(@RequestBody SalesRequest salesRequest) {
+    	LOGGER.debug("Entering...");
+    	LOGGER.debug("Received...salesRequest:::" + salesRequest);
+    	
+    	//Create Sales Object
+    	SalesHour salesHour=salesTemplateImpl.createSalesHour(salesRequest);
+    	LOGGER.debug("salesHour Created:" + salesHour);
+    	
+    	return salesHour;
+    }
     @RequestMapping(value = "/sales", method = RequestMethod.PUT)
 	public void updateSales(@RequestBody SalesRequest salesRequest) {
     	LOGGER.debug("Entering...");
@@ -60,7 +82,15 @@ public class SalesService {
     	LOGGER.debug("Leaving.");
     }
     
-    
+    @RequestMapping(value = "/saleshour", method = RequestMethod.PUT)
+   	public void updateSalesHour(@RequestBody SalesRequest salesRequest) {
+       	LOGGER.debug("Entering...");
+       	LOGGER.debug("Received...salesRequest:::" + salesRequest);
+       	
+       	//Update Sales Object with Request Object
+       	salesTemplateImpl.updateSalesHour(salesRequest);
+       	LOGGER.debug("Leaving.");
+       }
     @RequestMapping(value = "/sales/type", method = RequestMethod.PUT)
 	public void updateSalesWithNewType(@RequestBody SalesRequest salesRequest) {
     	LOGGER.debug("Entering...");
