@@ -1,7 +1,6 @@
 {
-  "date":"26-08-2016 01:40",
-  "hostname":"chennai",
-  "type":"furniture",
-  "volume":25,
-  "totalAmount":"111"
-}
+   "totalAmount":"111",
+   "hostname":"agra",
+   "type":"games",
+   "volume":100
+ }

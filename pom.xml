@@ -16,7 +16,10 @@
 </parent>
  <properties>
         <java.version>1.7</java.version>
-    </properties>
+     
+    <start-class>com.demo.app.SalesApp</start-class>
+</properties>
+  
 	<dependencies>
 		
 		

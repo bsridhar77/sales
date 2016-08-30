@@ -23,6 +23,14 @@ public class SalesHelper {
 	    	LOGGER.info("Constructed SalesKey Object:" + salesKey);
 	    	return salesKey;
 	    }
+	 
+	 public Date getDateWithoutSeconds(Date date){
+		 Calendar calendar = Calendar.getInstance();
+		 calendar.setTime(date);
+		 calendar.set(Calendar.SECOND, 0);
+	     calendar.set(Calendar.MILLISECOND, 0);
+	     return calendar.getTime();
+	 }
 	public Date getDateTime(Date date, String time) {
 		 Calendar calendar = Calendar.getInstance();
 	        System.out.println("DATE = " + date);
@@ -37,10 +45,31 @@ public class SalesHelper {
 	    	   }
 	       }
 	        calendar.setTime(date);
-	        calendar.set(Calendar.HOUR, Integer.parseInt(hourMinute[0]));
+	        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(hourMinute[0]));
 	        calendar.set(Calendar.MINUTE, Integer.parseInt(hourMinute[1]));
+	        calendar.set(Calendar.SECOND, 0);
+	        calendar.set(Calendar.MILLISECOND, 0);
 	      
 	        System.out.println("DATE-Time= " + calendar.getTime());
 		return calendar.getTime();
+	}
+	
+	public static void main(String[] arg){
+		/*Calendar calendar = Calendar.getInstance();
+		calendar.set*/
+		
+		
+		Calendar cal = Calendar.getInstance();
+	      // You cannot use Date class to extract individual Date fields
+	      int year = cal.get(Calendar.YEAR);
+	      int month = cal.get(Calendar.MONTH);      // 0 to 11
+	      int day = cal.get(Calendar.DAY_OF_MONTH);
+	      int hour = cal.get(Calendar.HOUR_OF_DAY);
+	      int minute = cal.get(Calendar.MINUTE);
+	      int second = cal.get(Calendar.SECOND);
+	   
+	      System.out.printf("Now is %4d/%02d/%02d %02d:%02d:%02d\n",  // Pad with zero
+	          year, month+1, day, hour, minute, second);
+		new SalesHelper().getDateTime(new Date(),"03:00");
 	}
 }

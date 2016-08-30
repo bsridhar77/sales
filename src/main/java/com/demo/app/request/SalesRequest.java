@@ -7,9 +7,19 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class SalesRequest {
 	
 	@JsonFormat(pattern="dd-MM-yyyy")
-	Date date;
+	Date timestamp;
 	String time;
 	String fromTime;
+	
+	
+	
+	String salesId;
+	public String getSalesId() {
+		return salesId;
+	}
+	public void setSalesId(String salesId) {
+		this.salesId = salesId;
+	}
 	public String getToTime() {
 		return toTime;
 	}
@@ -54,15 +64,15 @@ public class SalesRequest {
 		this.type = type;
 	}
 	public Date getDate() {
-		return date;
+		return timestamp;
 	}
 	public void setDate(Date date) {
-		this.date = date;
+		this.timestamp = date;
 	}
 	
 	@Override
 	public String toString() {
-		return "SalesRequest [date=" + date + ", hostname=" + hostname + ", totalAmount=" + totalAmount + ", type="
+		return "SalesRequest [date=" + timestamp + ", hostname=" + hostname + ", totalAmount=" + totalAmount + ", type="
 				+ type + ", volume=" + volume + "]";
 	}
 	public String getHostname() {

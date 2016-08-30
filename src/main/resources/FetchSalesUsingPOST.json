@@ -1,5 +1,7 @@
 {
-  "date":"26-08-2016 01:13",
-  "hostname":"chennai"
-  
+   "timestamp":"31-08-2016",
+   "hostname":"agra",
+   "type":"games",
+   "fromTime":"01:14",
+   "toTime":"01:15"
 }
