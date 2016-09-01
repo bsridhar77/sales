@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.demo.app.model.CustomResponseData;
 import com.demo.app.model.ResponseData;
 import com.demo.app.model.Sales;
 import com.demo.app.model.SalesHour;
@@ -39,7 +40,7 @@ public class SalesService {
     
 
     @RequestMapping(value = "/getsaleshour", method = RequestMethod.POST)
-	public List<ResponseData> fetchSalesHour(@RequestBody SalesRequest salesRequest) {
+	public List<CustomResponseData> fetchSalesHour(@RequestBody SalesRequest salesRequest) {
     	LOGGER.debug("Entering...");
     	LOGGER.debug("Received...salesRequest:::" + salesRequest);
       	

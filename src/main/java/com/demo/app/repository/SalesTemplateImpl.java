@@ -5,7 +5,7 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.newA
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.unwind;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -20,6 +20,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
+import com.demo.app.model.CustomResponseData;
 import com.demo.app.model.ResponseData;
 import com.demo.app.model.Sales;
 import com.demo.app.model.SalesData;
@@ -54,23 +55,32 @@ public class SalesTemplateImpl {
 		Date toDateTime=salesHelper.getDateTime(salesRequest.getDate(), salesRequest.getToTime());
 		
 		Criteria customDateTypeCriteria=Criteria.where("salesData.type").is(salesRequest.getType());
-		Criteria timestampCriteria=Criteria.where("timestamp").gte(fromDateTime).lte(toDateTime);
+		//Criteria timestampCriteria=Criteria.where("timestamp").gte(fromDateTime).lte(toDateTime);
 		Criteria hostNameCriteria=Criteria.where("hostName").is(salesRequest.getHostname());
 		
 		Criteria dateCriteria=new Criteria();
 		
-		dateCriteria.andOperator(timestampCriteria,hostNameCriteria,dateCriteria);
+		dateCriteria.andOperator(hostNameCriteria,dateCriteria);
 		
+		int fromHour=getHour(fromDateTime);
+		int toHour=getHour(toDateTime);
 		
 		Aggregation aggregation = newAggregation(
 				 match(dateCriteria),
 				 unwind("$salesData"),
-				 match(customDateTypeCriteria),
-				 spliceArray("salesData.volume",0,1)
+				 spliceArray(fromHour,toHour)
 	    );
+		
 		return aggregation;
  }
 	
+
+	private int getHour(Date date) {
+		 Calendar calendar = Calendar.getInstance();
+		 calendar.setTime(date);
+		return calendar.get(Calendar.HOUR_OF_DAY);
+	  
+}
 
 	public List<ResponseData> getSalesData(SalesRequest salesRequest){
 		
@@ -85,27 +95,46 @@ public class SalesTemplateImpl {
 		
 	}
 	
-public List<ResponseData> getSalesHourData(SalesRequest salesRequest){
+public List<CustomResponseData> getSalesHourData(SalesRequest salesRequest){
 		
 		
 		Aggregation aggregation=getAggregation(salesRequest);
 			
 		
-		AggregationResults<ResponseData> groupResults
-			= mongoTemplate.aggregate(aggregation, SalesHour.class, ResponseData.class);
-		List<ResponseData> result = groupResults.getMappedResults();
+		AggregationResults<CustomResponseData> groupResults
+			= mongoTemplate.aggregate(aggregation, SalesHour.class, CustomResponseData.class);
+		List<CustomResponseData> result = groupResults.getMappedResults();
 		
 		return result;
 		
 	}
-  private CustomOperation spliceArray(String fieldToSlice,int startPos,int count){
+  public CustomOperation spliceArray(int fromHour,int toHour){
+	
 	  
-	  return new CustomOperation(
-              new BasicDBObject("$project",
-                  new BasicDBObject("_id",0)
-                  		  .append("timestamp",1)
-                          .append("mydata" , new BasicDBObject("$slice",Arrays.asList("$" + fieldToSlice,startPos,count))) 
-                      ));
+	 
+	
+	  
+	  BasicDBObject output=new BasicDBObject("output",  getHourObject(fromHour,toHour));
+	
+	  
+	  BasicDBObject project=new BasicDBObject("$project",output);
+		
+	  System.out.println(project);
+	  CustomOperation cust=new CustomOperation(project);
+	  return cust;
+	
+  }
+  private BasicDBObject getHourObject(int fromHour, int toHour) {
+	  BasicDBObject hourObjects=new BasicDBObject();
+	  for(int i=fromHour;i<toHour;i++){
+		  hourObjects.append(String.valueOf(i),"$salesData.value." + i);
+		  }
+	  return hourObjects;
+}
+
+public static void main(String[] arg){
+	  new SalesTemplateImpl().spliceArray(22,23);
+	
   }
 
 	public Sales findSales(SalesRequest salesRequest){

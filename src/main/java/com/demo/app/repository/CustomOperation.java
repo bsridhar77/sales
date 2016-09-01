@@ -12,7 +12,11 @@ public class CustomOperation implements AggregationOperation {
         this.operation = operation;
     }
 
-    @Override
+    public CustomOperation() {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
     public DBObject toDBObject(AggregationOperationContext context) {
         return context.getMappedObject(operation);
     }
